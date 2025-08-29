@@ -1,76 +1,142 @@
+import tkinter as tk
+from tkinter import messagebox
+from PIL import Image, ImageTk
 import random
 
+
 class RockPaperScissorsGame:
-    def __init__(self):
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Kéo Búa Bao")
+        self.root.geometry("600x500")
+        self.root.configure(bg="#2c3e50")
+
+        # Nơi lựa chọn kéo hay búa hay bao
         self.choices = {1: "Kéo", 2: "Búa", 3: "Bao"}
         self.player_score = 0
         self.computer_score = 0
         self.total_games = 0
-    
-    def get_computer_choice(self):
-        return random.randint(1, 3)
-    
-    def determine_winner(self, player_choice, computer_choice):
-        if player_choice == computer_choice:
-            return "Hòa"
-        
-        if (player_choice == 1 and computer_choice == 3) or \
-           (player_choice == 2 and computer_choice == 1) or \
-           (player_choice == 3 and computer_choice == 2):
-            return "Player"
-        
-        return "Computer"
-    
+        self.rounds_to_play = 0
+
+        # Tải ảnh lên nò
+        self.images = {
+            "Kéo": ImageTk.PhotoImage(Image.open("Kéo.PNG").resize((120, 120))),
+            "Búa": ImageTk.PhotoImage(Image.open("Búa.PNG").resize((120, 120))),
+            "Bao": ImageTk.PhotoImage(Image.open("Bao.PNG").resize((120, 120))),
+        }
+
+        # Giao diện
+        self.setup_ui()
+
+    def setup_ui(self):
+        # Tiêu đề
+        tk.Label(self.root, text="KÉO BÚA BAO", font=("Times New Roman", 20, "bold"), bg="#2c3e50", fg="white").pack(pady=10)
+
+        # Nhập số vòng
+        frame_top = tk.Frame(self.root, bg="#2c3e50")
+        frame_top.pack(pady=5)
+        tk.Label(frame_top, text="Chơi mấy vòng đây:", font=("Times New Roman", 12), bg="#2c3e50", fg="white").pack(side="left")
+        self.entry_rounds = tk.Entry(frame_top, width=5)
+        self.entry_rounds.pack(side="left", padx=5)
+        tk.Button(frame_top, text="Bắt đầu", command=self.start_game, bg="#27ae60", fg="white", width=10).pack(side="left", padx=10)
+
+        # Khu vực chơi
+        self.frame_game = tk.Frame(self.root, bg="#34495e")
+        self.frame_game.pack(pady=15)
+
+        self.label_player = tk.Label(self.frame_game, text="Bạn", font=("Times New Roman", 14), bg="#34495e", fg="white")
+        self.label_player.grid(row=0, column=0, padx=50)
+
+        self.label_computer = tk.Label(self.frame_game, text="Máy", font=("Times New Roman", 14), bg="#34495e", fg="white")
+        self.label_computer.grid(row=0, column=2, padx=50)
+
+        self.player_img = tk.Label(self.frame_game, bg="#34495e")
+        self.player_img.grid(row=1, column=0)
+
+        self.computer_img = tk.Label(self.frame_game, bg="#34495e")
+        self.computer_img.grid(row=1, column=2)
+
+        # Nút chọn
+        frame_buttons = tk.Frame(self.root, bg="#2c3e50")
+        frame_buttons.pack(pady=10)
+        for i, choice in self.choices.items():
+            btn = tk.Button(frame_buttons, text=choice, image=self.images[choice], compound="top",
+                            command=lambda x=i: self.play_round(x), bg="#2980b9", fg="white", width=140, height=160)
+            btn.pack(side="left", padx=10)
+
+        # Kết quả
+        self.label_result = tk.Label(self.root, text="Kết quả: ", font=("Times New Roman", 14, "bold"), bg="#2c3e50", fg="yellow")
+        self.label_result.pack(pady=10)
+
+        # Tỷ số
+        self.label_score = tk.Label(self.root, text="Tỷ số: 0 - 0", font=("Times New Roman", 14), bg="#2c3e50", fg="white")
+        self.label_score.pack()
+
+        # Nút chức năng
+        frame_bottom = tk.Frame(self.root, bg="#2c3e50")
+        frame_bottom.pack(pady=10)
+        tk.Button(frame_bottom, text="Chơi mà thua hả? dỡn mặt", command=self.reset_game, bg="#e67e22", fg="white", width=20).pack(side="left", padx=5)
+        tk.Button(frame_bottom, text="Thoát đi đồ gà", command=self.root.quit, bg="#c0392b", fg="white", width=10).pack(side="left", padx=5)
+
+    def start_game(self):
+        try:
+            self.rounds_to_play = int(self.entry_rounds.get())
+            self.reset_game()
+            messagebox.showinfo("Thông báo", f"Trò chơi bắt đầu với {self.rounds_to_play} vòng!")
+        except:
+            messagebox.showerror("Lỗi", "Vui lòng nhập số vòng hợp lệ!")
+
     def play_round(self, player_choice):
-        if player_choice not in [1, 2, 3]:
-            return None
-        
-        computer_choice = self.get_computer_choice()
+        if self.rounds_to_play == 0:
+            messagebox.showwarning("Chưa bắt đầu", "Hãy nhập số vòng và nhấn Bắt đầu!")
+            return
+
+        computer_choice = random.randint(1, 3)
+
+        # Hiện ảnh
+        self.player_img.config(image=self.images[self.choices[player_choice]])
+        self.computer_img.config(image=self.images[self.choices[computer_choice]])
+
         winner = self.determine_winner(player_choice, computer_choice)
-        
+
         if winner == "Player":
             self.player_score += 1
         elif winner == "Computer":
             self.computer_score += 1
-        
+
         self.total_games += 1
-        
-        return {
-            'player_choice': self.choices[player_choice],
-            'computer_choice': self.choices[computer_choice],
-            'winner': winner,
-            'player_score': self.player_score,
-            'computer_score': self.computer_score,
-            'total_games': self.total_games
-        }
-    
+        self.label_score.config(text=f"Tỷ số: {self.player_score} - {self.computer_score}")
+        self.label_result.config(text=f"Kết quả: {winner}")
+
+        if self.total_games >= self.rounds_to_play:
+            if self.player_score > self.computer_score:
+                messagebox.showinfo("Kết thúc", "Bạn thắng chung cuộc!")
+            elif self.player_score < self.computer_score:
+                messagebox.showinfo("Kết thúc", "Máy thắng chung cuộc!")
+            else:
+                messagebox.showinfo("Kết thúc", "Hai bên hòa!")
+            self.rounds_to_play = 0  # khóa lại
+
+    def determine_winner(self, player_choice, computer_choice):
+        if player_choice == computer_choice:
+            return "Hòa"
+        if (player_choice == 1 and computer_choice == 3) or \
+           (player_choice == 2 and computer_choice == 1) or \
+           (player_choice == 3 and computer_choice == 2):
+            return "Player"
+        return "Computer"
+
     def reset_game(self):
         self.player_score = 0
         self.computer_score = 0
         self.total_games = 0
-    
-    def get_game_stats(self):
-        if self.total_games == 0:
-            return "Chưa chơi ván nào!"
-        
-        win_rate = (self.player_score / self.total_games) * 100
-        draws = self.total_games - self.player_score - self.computer_score
-        return f"Tổng: {self.total_games} | Thắng: {self.player_score} | Thua: {self.computer_score} | Hòa: {draws} | Tỷ lệ: {win_rate:.1f}%"
+        self.label_score.config(text="Tỷ số: 0 - 0")
+        self.label_result.config(text="Kết quả: ")
+        self.player_img.config(image="")
+        self.computer_img.config(image="")
+
 
 if __name__ == "__main__":
-    game = RockPaperScissorsGame()
-    print("1=Kéo, 2=Búa, 3=Bao, 0=Thoát")
-    
-    while True:
-        try:
-            choice = input("Chọn (1-3): ")
-            if choice == '0':
-                print(game.get_game_stats())
-                break
-            
-            result = game.play_round(int(choice))
-            if result:
-                print(f"Bạn: {result['player_choice']} | Máy: {result['computer_choice']}")
-                print(f"Kết quả: {result['winner']} | Tỷ số: {result['player_score']}-{result['computer_score']}")
-        except:
-            print("Nhập lại!")
+    root = tk.Tk()
+    game = RockPaperScissorsGame(root)
+    root.mainloop()
